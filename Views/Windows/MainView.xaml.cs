@@ -1,7 +1,7 @@
 ﻿using SwitchyReloaded.ViewModels;
 using System.Windows;
 
-namespace SwitchyReloaded.Views
+namespace Swapster.Views
 {
     /// <summary>
     /// Code Behind of MainView.xaml

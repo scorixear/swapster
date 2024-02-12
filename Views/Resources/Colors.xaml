@@ -1,28 +1,8 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="bonjwaGreen">
-        <SolidColorBrush.Color>
-            <Color>#166c46</Color>
-        </SolidColorBrush.Color>
-    </SolidColorBrush>
-    <SolidColorBrush x:Key="bonjwaBorder">
-        <SolidColorBrush.Color>
-            <Color>#104f33</Color>
-        </SolidColorBrush.Color>
-    </SolidColorBrush>
-    <SolidColorBrush x:Key="bonjwaLight">
-        <SolidColorBrush.Color>
-            <Color>#1d925e</Color>
-        </SolidColorBrush.Color>
-    </SolidColorBrush>
-    <SolidColorBrush x:Key="bonjwaDark">
-        <SolidColorBrush.Color>
-            <Color>#125e3d</Color>
-        </SolidColorBrush.Color>
-    </SolidColorBrush>
-    <SolidColorBrush x:Key="bonjwaBackground">
-        <SolidColorBrush.Color>
-            <Color>#252526</Color>
-        </SolidColorBrush.Color>
-    </SolidColorBrush>
+    <SolidColorBrush x:Key="bonjwaGreen" Color="#166c46"/>
+    <SolidColorBrush x:Key="bonjwaBorder" Color="#104f33"/>
+    <SolidColorBrush x:Key="bonjwaLight" Color="#1d925e"/>
+    <SolidColorBrush x:Key="bonjwaDark" Color="#125e3d"/>
+    <SolidColorBrush x:Key="bonjwaBackground" Color="#252526"/>
 </ResourceDictionary>

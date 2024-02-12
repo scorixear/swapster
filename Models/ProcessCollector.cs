@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace SwitchyReloaded.Models
+namespace Swapster.Models
 {
     // Class for collecting all processes that do have a graphical user interface
     public class ProcessCollector

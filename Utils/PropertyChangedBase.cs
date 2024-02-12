@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SwitchyReloaded.Utils
+namespace Swapster.Utils
 {
     // Base Class that provides an implementation of the INotifyPropertyChanged event
     public class PropertyChangedBase : INotifyPropertyChanged

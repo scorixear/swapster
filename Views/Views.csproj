@@ -5,10 +5,10 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <RootNamespace>SwitchyReloaded.Views</RootNamespace>
+    <RootNamespace>Swapster.Views</RootNamespace>
     <Authors>Paul Keller</Authors>
-    <AssemblyName>SwitchyReloaded</AssemblyName>
-    <StartupObject>SwitchyReloaded.App</StartupObject>
+    <AssemblyName>Swapster</AssemblyName>
+    <StartupObject>Swapster.App</StartupObject>
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
   </PropertyGroup>
 

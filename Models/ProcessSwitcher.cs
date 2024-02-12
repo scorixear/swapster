@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace SwitchyReloaded.Models
+namespace Swapster.Models
 {
     // A Class that implements the switching of procceses
     public partial class ProcessSwitcher

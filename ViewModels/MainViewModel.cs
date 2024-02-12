@@ -1,9 +1,9 @@
-﻿using SwitchyReloaded.Models;
-using SwitchyReloaded.Utils;
+﻿using Swapster.Models;
+using Swapster.Utils;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace SwitchyReloaded.ViewModels
+namespace Swapster.ViewModels
 {
     public class MainViewModel : PropertyChangedBase
     {
