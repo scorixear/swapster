@@ -7,3 +7,5 @@ It was build with WPF and .Net 7 and is colored in the Bonjwa Corporate Colors.
 2. Install the .Net Runtime 7 (download here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
 3. Start the `Swapster.exe` file.
 
+## Recommendation
+It is best recommended to put all applications in `Window` or `Borderless Fullscreen`!
