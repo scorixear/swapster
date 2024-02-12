@@ -8,9 +8,9 @@ namespace Swapster.Models
     public partial class ProcessSwitcher
     {
         // Alternative Option to set Focus
-        //[LibraryImport("user32.dll")]
-        //[return: MarshalAs(UnmanagedType.Bool)]
-        //private static partial bool SetForegroundWindow(IntPtr hWnd);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetForegroundWindow(IntPtr hWnd);
 
         // Used for Maximizing applications if they are minimized
         [LibraryImport("user32.dll")]
@@ -20,6 +20,14 @@ namespace Swapster.Models
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool IsIconic(IntPtr hWnd);
+
+        [LibraryImport("user32.dll", SetLastError = true)]
+        private static partial uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+        [LibraryImport("kernel32.dll")]
+        private static partial uint GetCurrentThreadId();
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
 
         // Enum IntPtr for what ShowWindow can do
         private enum ShowWindowEnum : int
@@ -39,19 +47,25 @@ namespace Swapster.Models
             ForceMinimized = 11
         }
 
-        public static void BringWindowToFront(Process process)
+        private readonly uint _threadId;
+        public ProcessSwitcher()
+        {
+            _threadId = GetCurrentThreadId();
+        }
+
+        public void BringWindowToFront(Process process)
         {
             // If the MainWindowHandle is 0, it is a Process that doesn't have a graphical interface (or is mimized to the tray)
             if (process.MainWindowHandle == IntPtr.Zero)
             {
                 throw new ProcessFocusException("Process has not MainWindowHandle");
             }
-
+            bool success;
             // If the Process is minimized
             if (IsIconic(process.MainWindowHandle))
             {
                 // maximize the window
-                bool success = ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
+                success = ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
                 if (success == false)
                 {
                     throw new ProcessFocusException("Could not maximize window");
@@ -63,7 +77,87 @@ namespace Swapster.Models
             }
             catch
             {
-                throw new ProcessFocusException("Could not set focus to app");
+                throw new ProcessFocusException();
+            }
+            //success = SetForegroundWindow(process.MainWindowHandle);
+            //if (success == false)
+            //{
+            //    throw new ProcessFocusException("Could not set focus to window");
+            //}
+        }
+
+        private int currentProcess = 0;
+        private List<Process> processList = new List<Process>();
+        private int timerLength;
+        private int currentTime;
+        private PeriodicTimer? timer;
+        public delegate void TimerTickEventHandler(int currentTime);
+        public event TimerTickEventHandler? TimerTickEvent;
+        public delegate void ProcessSwitchErrorEventHandler(string processName);
+        public event ProcessSwitchErrorEventHandler? ProcessSwitchErrorEvent;
+        public bool Start(List<Process> processes, int timerLength)
+        {
+            if (processes.Count == 0 || timerLength <= 0)
+            {
+                return false;
+            }
+            processList = processes;
+            this.timerLength = timerLength;
+            this.currentTime = timerLength;
+
+            foreach (Process process in processes)
+            {
+                uint processThreadId = GetWindowThreadProcessId(process.MainWindowHandle, out var _);
+                AttachThreadInput(_threadId, processThreadId, true);
+            }
+
+            Task timerTask = new(async () =>
+            {
+                timer = new(TimeSpan.FromSeconds(5));
+                while (await timer.WaitForNextTickAsync())
+                {
+                    TimerTickEvent?.Invoke(this.currentTime);
+                    if (this.currentTime > 4)
+                    {
+                        this.currentTime -= 5;
+                    }
+                    else
+                    {
+                        this.currentTime = this.timerLength;
+                        if (this.currentProcess >= this.processList.Count)
+                        {
+                            this.currentProcess = 0;
+                        }
+                        try
+                        {
+                            BringWindowToFront(this.processList[currentProcess]);
+                        }
+                        catch
+                        {
+                            ProcessSwitchErrorEvent?.Invoke(this.processList[currentProcess].ProcessName);
+                        }
+                        this.currentProcess++;
+                    }
+                }
+            });
+            timerTask.Start();
+            return true;
+        }
+
+        public void Stop()
+        {
+            try
+            {
+                timer?.Dispose();
+                foreach (Process process in processList)
+                {
+                    uint processThreadId = GetWindowThreadProcessId(process.MainWindowHandle, out var _);
+                    AttachThreadInput(_threadId, processThreadId, false);
+                }
+            }
+            catch
+            {
+                throw;
             }
         }
 
