@@ -10,6 +10,7 @@ namespace Swapster.ViewModels
     {
         // Model class for collecting information about running processes
         private readonly ProcessCollector processCollector;
+        private readonly ProcessSwitcher processSwitcher;
 
         private string _errorTitle = "Error";
         public string ErrorTitle
@@ -49,11 +50,6 @@ namespace Swapster.ViewModels
             ShowError = false;
         }
 
-        // Currently Shown Process
-        private int processId = 0;
-        // Timer object for timing when to switch
-        private System.Timers.Timer? timer;
-
         // Variable for the Start / Stop Button
         private string _runningState = "Start";
         public string RunningState
@@ -87,22 +83,25 @@ namespace Swapster.ViewModels
                     // If the timer length is a number
                     if (int.TryParse(TimerLength, out int intTimerInterval))
                     {
-                        timerLength = intTimerInterval;
-                        timerCounter = timerLength;
-                        // If a current timer is running
-                        if (timer != null)
+                        List<Process> processes = new();
+                        foreach (ProcessData p in SelectedProcesses)
                         {
-                            // stop and dispose it
-                            timer?.Stop();
-                            timer?.Dispose();
+                            Process? process = processCollector.GetProcessByName(p.Name);
+                            if (process == null)
+                            {
+                                ErrorMessage = $"Konnte nicht zum Prozess {p.Name} wechseln. Bitte einmal auf \"Refresh\" klicken!";
+                                ShowError = true;
+                                return;
+                            }
+                            processes.Add(process);
                         }
-                        // Create a new Timer that elapses every second
-                        timer = new System.Timers.Timer(1000);
-                        timer.Elapsed += Timer_Elapsed;
-                        // And autoresets
-                        timer.AutoReset = true;
-                        // And start the timer
-                        timer.Enabled = true;
+                        processSwitcher.TimerTickEvent += Timer_Elapsed;
+                        processSwitcher.ProcessSwitchErrorEvent += ProcessSwitcher_ProcessSwitchErrorEvent;
+                        bool success = processSwitcher.Start(processes, intTimerInterval);
+                        if (success == false)
+                        {
+                            return;
+                        }
                         // then set the label
                         RunningState = "Stop";
                     }
@@ -116,10 +115,15 @@ namespace Swapster.ViewModels
                 // if the timer is stopped
                 else
                 {
-                    // Stop and dispose the timer
-                    timer?.Stop();
-                    timer?.Dispose();
-                    timer = null;
+                    try
+                    {
+                        processSwitcher.Stop();
+                    }
+                    catch
+                    {
+                        ErrorMessage = $"Interner Error. Die Anwendung muss neugstartet werden!";
+                        ShowError = true;
+                    }
                     // then set the label
                     RunningState = "Start";
                 }
@@ -129,60 +133,21 @@ namespace Swapster.ViewModels
             }
         }
 
-        // Called every second when the timer is elapsed
-        private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+        private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
         {
-            // if no processes are selected, skip
-            if (SelectedProcesses.Count == 0)
-            {
-                return;
-            }
+            ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
+            ShowError = true;
+            IsRunning = false;
+        }
 
-            // Update Timer Countdown
-            TimerCountdown = $"Switch in {timerCounter} Sekunden";
-            // if we haven't hit the switch timer
-            if (timerCounter > 0)
-            {
-                // just decremnt
-                timerCounter--;
-                return;
-            }
-            // otherwise reset to set timer length
-            timerCounter = timerLength;
-            // increment processId
-            processId++;
-            // wrap processId to the start
-            if (processId >= SelectedProcesses.Count)
-            {
-                processId = 0;
-            }
-            // Get the process object from the name
-            Process? process = processCollector.GetProcessByName(SelectedProcesses[processId].Name);
-            // if the process could not be found, skip
-            if (process == null)
-            {
-                return;
-            }
-            try
-            {
-                // Call model class to bring process to front
-                ProcessSwitcher.BringWindowToFront(process);
-            }
-            catch (ProcessSwitcher.ProcessFocusException)
-            {
-                IsRunning = false;
-                ErrorMessage = $"Konnte nicht zum Prozess {process.ProcessName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
-                ShowError = true;
-            }
+        // Called every second when the timer is elapsed
+        private void Timer_Elapsed(int timerLeft)
+        {
+            TimerCountdown = $"Switch in {timerLeft} Sekunden";
         }
 
         // Binding for the Timer Length
         public string TimerLength { get; set; } = "60";
-        // Integer Representation of TimerLength
-        private int timerLength = 60;
-        // Counter that counts down from TimerLength to 0
-        private int timerCounter = 60;
-
         // Label for Timer Countdown
         private string _timerCountdown = "Switch in 0 Sekunden";
         public string TimerCountdown
@@ -239,6 +204,7 @@ namespace Swapster.ViewModels
         public MainViewModel()
         {
             processCollector = new ProcessCollector();
+            processSwitcher = new ProcessSwitcher();
             OkClickCommand = new DelegateCommand(OnErrorOkClick);
         }
 
