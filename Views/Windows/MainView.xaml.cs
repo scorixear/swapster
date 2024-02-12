@@ -1,4 +1,4 @@
-﻿using SwitchyReloaded.ViewModels;
+﻿using Swapster.ViewModels;
 using System.Windows;
 
 namespace Swapster.Views
