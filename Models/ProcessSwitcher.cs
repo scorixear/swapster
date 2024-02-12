@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.VisualBasic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Swapster.Models
@@ -6,12 +7,19 @@ namespace Swapster.Models
     // A Class that implements the switching of procceses
     public partial class ProcessSwitcher
     {
-        // Used for actually setting the Focus
-        [LibraryImport("user32.dll")] private static partial int SetForegroundWindow(IntPtr hWnd);
+        // Alternative Option to set Focus
+        //[LibraryImport("user32.dll")]
+        //[return: MarshalAs(UnmanagedType.Bool)]
+        //private static partial bool SetForegroundWindow(IntPtr hWnd);
+
         // Used for Maximizing applications if they are minimized
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool ShowWindow(IntPtr hWnd, ShowWindowEnum flags);
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsIconic(IntPtr hWnd);
 
         // Enum IntPtr for what ShowWindow can do
         private enum ShowWindowEnum : int
@@ -36,19 +44,34 @@ namespace Swapster.Models
             // If the MainWindowHandle is 0, it is a Process that doesn't have a graphical interface (or is mimized to the tray)
             if (process.MainWindowHandle == IntPtr.Zero)
             {
-                throw new NoGraphicalProcessException();
+                throw new ProcessFocusException("Process has not MainWindowHandle");
             }
-            // maximize the window
-            ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
-            // and set the focus
-            SetForegroundWindow(process.MainWindowHandle);
+
+            // If the Process is minimized
+            if (IsIconic(process.MainWindowHandle))
+            {
+                // maximize the window
+                bool success = ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
+                if (success == false)
+                {
+                    throw new ProcessFocusException("Could not maximize window");
+                }
+            }
+            try
+            {
+                Interaction.AppActivate(process.Id);
+            }
+            catch
+            {
+                throw new ProcessFocusException("Could not set focus to app");
+            }
         }
 
-        public class NoGraphicalProcessException : Exception
+        public class ProcessFocusException : Exception
         {
-            public NoGraphicalProcessException() { }
-            public NoGraphicalProcessException(string message) : base(message) { }
-            public NoGraphicalProcessException(string message, Exception innerException) : base(message, innerException) { }
+            public ProcessFocusException() { }
+            public ProcessFocusException(string message) : base(message) { }
+            public ProcessFocusException(string message, Exception innerException) : base(message, innerException) { }
         }
     }
 }

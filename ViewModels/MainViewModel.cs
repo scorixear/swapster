@@ -2,6 +2,7 @@
 using Swapster.Utils;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows.Input;
 
 namespace Swapster.ViewModels
 {
@@ -9,6 +10,44 @@ namespace Swapster.ViewModels
     {
         // Model class for collecting information about running processes
         private readonly ProcessCollector processCollector;
+
+        private string _errorTitle = "Error";
+        public string ErrorTitle
+        {
+            get => _errorTitle;
+            set
+            {
+                _errorTitle = value;
+                NotifyOfPopertyChanged(nameof(ErrorTitle));
+            }
+        }
+        private string _errorMessage = "Fehlermeldung unkown";
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                _errorMessage = value;
+                NotifyOfPopertyChanged(nameof(ErrorMessage));
+            }
+        }
+        private bool _showError = false;
+        public bool ShowError
+        {
+            get => _showError;
+            set
+            {
+                _showError = value;
+                NotifyOfPopertyChanged(nameof(ShowError));
+            }
+        }
+
+        public ICommand OkClickCommand { get; set; }
+
+        public void OnErrorOkClick(object? parameter)
+        {
+            ShowError = false;
+        }
 
         // Currently Shown Process
         private int processId = 0;
@@ -124,8 +163,17 @@ namespace Swapster.ViewModels
             {
                 return;
             }
-            // Call model class to bring process to front
-            ProcessSwitcher.BringWindowToFront(process);
+            try
+            {
+                // Call model class to bring process to front
+                ProcessSwitcher.BringWindowToFront(process);
+            }
+            catch (ProcessSwitcher.ProcessFocusException)
+            {
+                IsRunning = false;
+                ErrorMessage = $"Konnte nicht zum Prozess {process.ProcessName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
+                ShowError = true;
+            }
         }
 
         // Binding for the Timer Length
@@ -191,6 +239,7 @@ namespace Swapster.ViewModels
         public MainViewModel()
         {
             processCollector = new ProcessCollector();
+            OkClickCommand = new DelegateCommand(OnErrorOkClick);
         }
 
         // Called when the Window is first loaded up

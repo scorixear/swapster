@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Swapster.Views"
         xmlns:vm="clr-namespace:Swapster.ViewModels;assembly=ViewModels"
         mc:Ignorable="d"
         Title="Swapster" Height="800" Width="1200"
@@ -21,6 +22,31 @@
             <ColumnDefinition Width="100px"/> <!-- Column for Selected and Deselecting Processes -->
             <ColumnDefinition/> <!-- Column for List of Selected Processes -->
         </Grid.ColumnDefinitions>
+
+        <local:ErrorPopup VerticalAlignment="Stretch" 
+                          HorizontalAlignment="Stretch" 
+                          Grid.ColumnSpan="3" 
+                          Grid.RowSpan="2" 
+                          Title="{Binding ErrorTitle}"
+                          Error="{Binding ErrorMessage}"
+                          OkClick="{Binding OkClickCommand}"
+                          Panel.ZIndex="10">
+            <local:ErrorPopup.Style>
+                <Style TargetType="{x:Type local:ErrorPopup}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowError, Mode=OneWay}" Value="true">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ShowError, Mode=OneWay}" Value="false">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </local:ErrorPopup.Style>
+        </local:ErrorPopup>
+
+
         <!--#region Non-Selected Processes -->
         <Grid Background="Transparent"
               Margin="10,0">
