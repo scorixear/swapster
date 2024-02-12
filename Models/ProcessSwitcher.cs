@@ -7,19 +7,27 @@ namespace Swapster.Models
     // A Class that implements the switching of procceses
     public partial class ProcessSwitcher
     {
-        // Alternative Option to set Focus
-        [LibraryImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool SetForegroundWindow(IntPtr hWnd);
+        // Alternative Options to set Focus
+        // all not that reliable
+        //[LibraryImport("user32.dll")]
+        //[return: MarshalAs(UnmanagedType.Bool)]
+        //private static partial bool SetForegroundWindow(IntPtr hWnd);
+
+        //[LibraryImport("user32.dll")]
+        //[return: MarshalAs(UnmanagedType.Bool)]
+        //private static partial bool SwitchToThisWindow(IntPtr hWnd, [MarshalAs(UnmanagedType.Bool)] bool bEnable);
+
+        //[DllImport("user32.dll")]
+        //private static extern IntPtr SetFocus(HandleRef hWnd);
+
+        //[DllImport("user32.dll")]
+        //private static extern IntPtr SetActiveWindow(HandleRef hWnd);
 
         // Used for Maximizing applications if they are minimized
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool ShowWindow(IntPtr hWnd, ShowWindowEnum flags);
 
-        [LibraryImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool IsIconic(IntPtr hWnd);
 
         [LibraryImport("user32.dll", SetLastError = true)]
         private static partial uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
@@ -53,41 +61,22 @@ namespace Swapster.Models
             _threadId = GetCurrentThreadId();
         }
 
-        public void BringWindowToFront(Process process)
+        public int BringWindowToFront(Process process)
         {
-            // If the MainWindowHandle is 0, it is a Process that doesn't have a graphical interface (or is mimized to the tray)
-            if (process.MainWindowHandle == IntPtr.Zero)
-            {
-                throw new ProcessFocusException("Process has not MainWindowHandle");
-            }
-            bool success;
-            // If the Process is minimized
-            if (IsIconic(process.MainWindowHandle))
-            {
-                // maximize the window
-                success = ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
-                if (success == false)
-                {
-                    throw new ProcessFocusException("Could not maximize window");
-                }
-            }
+            ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
             try
             {
                 Interaction.AppActivate(process.Id);
             }
             catch
             {
-                throw new ProcessFocusException();
+                return 3;
             }
-            //success = SetForegroundWindow(process.MainWindowHandle);
-            //if (success == false)
-            //{
-            //    throw new ProcessFocusException("Could not set focus to window");
-            //}
+            return 0;
         }
 
         private int currentProcess = 0;
-        private List<Process> processList = new List<Process>();
+        private List<Process> processList = new();
         private int timerLength;
         private int currentTime;
         private PeriodicTimer? timer;
@@ -104,22 +93,23 @@ namespace Swapster.Models
             processList = processes;
             this.timerLength = timerLength;
             this.currentTime = timerLength;
+            this.currentProcess = 0;
 
             foreach (Process process in processes)
             {
-                uint processThreadId = GetWindowThreadProcessId(process.MainWindowHandle, out var _);
+                GetWindowThreadProcessId(process.MainWindowHandle, out var processThreadId);
                 AttachThreadInput(_threadId, processThreadId, true);
             }
 
             Task timerTask = new(async () =>
             {
-                timer = new(TimeSpan.FromSeconds(5));
+                timer = new(TimeSpan.FromSeconds(1));
                 while (await timer.WaitForNextTickAsync())
                 {
                     TimerTickEvent?.Invoke(this.currentTime);
-                    if (this.currentTime > 4)
+                    if (this.currentTime > 0)
                     {
-                        this.currentTime -= 5;
+                        this.currentTime -= 1;
                     }
                     else
                     {
@@ -130,7 +120,11 @@ namespace Swapster.Models
                         }
                         try
                         {
-                            BringWindowToFront(this.processList[currentProcess]);
+                            int result = BringWindowToFront(this.processList[currentProcess]);
+                            if (result != 0)
+                            {
+                                ProcessSwitchErrorEvent?.Invoke(this.processList[currentProcess].ProcessName + ": " + result);
+                            }
                         }
                         catch
                         {
@@ -140,6 +134,16 @@ namespace Swapster.Models
                     }
                 }
             });
+            try
+            {
+                BringWindowToFront(this.processList[currentProcess]);
+            }
+            catch
+            {
+                ProcessSwitchErrorEvent?.Invoke(this.processList[currentProcess].ProcessName);
+                return false;
+            }
+            this.currentProcess++;
             timerTask.Start();
             return true;
         }
@@ -151,7 +155,7 @@ namespace Swapster.Models
                 timer?.Dispose();
                 foreach (Process process in processList)
                 {
-                    uint processThreadId = GetWindowThreadProcessId(process.MainWindowHandle, out var _);
+                    GetWindowThreadProcessId(process.MainWindowHandle, out var processThreadId);
                     AttachThreadInput(_threadId, processThreadId, false);
                 }
             }
