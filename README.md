@@ -10,4 +10,4 @@ The original project from Calax can be found [here](https://github.com/CalaxDev/
 3. Start the `Swapster.exe` file.
 
 ## Recommendation
-It is best recommended to put all applications in `Window` or `Borderless Fullscreen`!
+It is recommended to put all applications in `Window` or `Borderless Fullscreen`!
