@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/> <!-- Column for List of Non-Selected Processes -->
-            <ColumnDefinition Width="100px"/> <!-- Column for Selected and Deselecting Processes -->
+            <ColumnDefinition Width="150px"/> <!-- Column for Selected and Deselecting Processes -->
             <ColumnDefinition/> <!-- Column for List of Selected Processes -->
         </Grid.ColumnDefinitions>
 
@@ -158,18 +158,34 @@
             <!--Label for inputing the Timer length-->
             <Label Content="Timer (in Sek.)" Foreground="White" HorizontalContentAlignment="Center"/>
             <Border BorderBrush="{StaticResource bonjwaGreen}"
-                    BorderThickness="1">
+                    BorderThickness="2">
                 <!--Input Box for actually writing the length in-->
                 <TextBox Text="{Binding TimerLength, Mode=TwoWay}" d:Text="60" Height="20"
-                           Foreground="White"
-                           TextAlignment="Center"
-                           BorderBrush="Transparent"
+                         Foreground="White"
+                         TextAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         BorderBrush="Transparent"
                          BorderThickness="0"
                          Background="Transparent"
                          SelectionBrush="White"
                          CaretBrush="White">
                 </TextBox>
             </Border>
+            <Label Content="Methode"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   Margin="0, 10, 0, 0"/>
+            <ComboBox Style="{DynamicResource BonjwaComboBox}" SelectedValue="{Binding SelectedSwitchMethod}">
+                <ComboBoxItem Content="AppActivate" IsSelected="True"/>
+                <ComboBoxItem Content="SetForeground"/>
+                <ComboBoxItem Content="SwitchTo"/>
+            </ComboBox>
+            <Label Content="Ton abspielen"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   Margin="0, 10, 0, 0"/>
+            <CheckBox IsChecked="{Binding SoundChecked}"
+                      HorizontalAlignment="Center"/>
         </StackPanel>
         
         <!--Section for the Selected Processes-->

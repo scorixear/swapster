@@ -2,6 +2,9 @@
 
 namespace Swapster.Utils
 {
+    /// <summary>
+    /// An ICommand implementation, that delegates the called command to a given function
+    /// </summary>
     public class DelegateCommand : ICommand
     {
         private readonly Predicate<object?>? _canExecute;

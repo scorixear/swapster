@@ -2,6 +2,9 @@
 using Swapster.Utils;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Media;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 
 namespace Swapster.ViewModels
@@ -97,7 +100,7 @@ namespace Swapster.ViewModels
                         }
                         processSwitcher.TimerTickEvent += Timer_Elapsed;
                         processSwitcher.ProcessSwitchErrorEvent += ProcessSwitcher_ProcessSwitchErrorEvent;
-                        bool success = processSwitcher.Start(processes, intTimerInterval);
+                        bool success = processSwitcher.Start(processes, intTimerInterval, _selectedSwitchType);
                         if (success == false)
                         {
                             return;
@@ -131,19 +134,6 @@ namespace Swapster.ViewModels
                 _isRunning = value;
                 NotifyOfPopertyChanged(nameof(IsRunning));
             }
-        }
-
-        private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
-        {
-            ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
-            ShowError = true;
-            IsRunning = false;
-        }
-
-        // Called every second when the timer is elapsed
-        private void Timer_Elapsed(int timerLeft)
-        {
-            TimerCountdown = $"Switch in {timerLeft} Sekunden";
         }
 
         // Binding for the Timer Length
@@ -200,13 +190,78 @@ namespace Swapster.ViewModels
         // Currently Process selected from the selected processes
         public ProcessData? SelectedActiveProcess { get; set; }
 
+        private ProcessSwitcher.ProcessSwitchType _selectedSwitchType = ProcessSwitcher.ProcessSwitchType.AppActivate;
+        public string SelectedSwitchMethod
+        {
+            get
+            {
+                return _selectedSwitchType switch
+                {
+                    ProcessSwitcher.ProcessSwitchType.SetForegroundWindow => "SetForeground",
+                    ProcessSwitcher.ProcessSwitchType.SwitchToThisWindow => "SwitchTo",
+                    _ => "AppActivate",
+                };
+            }
 
+            set
+            {
+                _selectedSwitchType = value switch
+                {
+                    "SetForeground" => ProcessSwitcher.ProcessSwitchType.SetForegroundWindow,
+                    "SwitchTo" => ProcessSwitcher.ProcessSwitchType.SwitchToThisWindow,
+                    _ => ProcessSwitcher.ProcessSwitchType.AppActivate,
+                };
+                NotifyOfPopertyChanged(nameof(SelectedSwitchMethod));
+            }
+        }
+
+        public bool SoundChecked { get; set; }
+
+        private readonly SoundPlayer? doneSound;
+        private readonly SoundPlayer? preSound;
         public MainViewModel()
         {
             processCollector = new ProcessCollector();
             processSwitcher = new ProcessSwitcher();
             OkClickCommand = new DelegateCommand(OnErrorOkClick);
         }
+
+        private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
+        {
+            ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
+            ShowError = true;
+            IsRunning = false;
+        }
+
+        /// <summary>
+        /// Called every second when the timer elapsed
+        /// </summary>
+        /// <param name="timerLeft"></param>
+        private void Timer_Elapsed(int timerLeft)
+        {
+            TimerCountdown = $"Switch in {timerLeft} Sekunden";
+            if (SoundChecked && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (timerLeft < 4 && timerLeft > 0)
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    string prePath = assembly.GetManifestResourceNames().Single(str => str.EndsWith("pre.wav"));
+                    Stream? stream = assembly.GetManifestResourceStream(prePath);
+                    SoundPlayer player = new(stream);
+                    player.Play();
+
+                }
+                else if (timerLeft == 0)
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    string prePath = assembly.GetManifestResourceNames().Single(str => str.EndsWith("done.wav"));
+                    Stream? stream = assembly.GetManifestResourceStream(prePath);
+                    SoundPlayer player = new(stream);
+                    player.Play();
+                }
+            }
+        }
+
 
         // Called when the Window is first loaded up
         public void OnWindowLoaded()
