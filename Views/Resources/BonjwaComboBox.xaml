@@ -5,6 +5,7 @@
     <Color x:Key="ControlMouseOverColor">#1d925e</Color>
     <Color x:Key="ControlPressedColor">#104f33</Color>
     <Color x:Key="ControlColor">Transparent</Color>
+    <Color x:Key="DropDownColor">#252526</Color>
     <Color x:Key="DisabledControlDarkColor">#FFC5CBF9</Color>
     <Color x:Key="DisabledForegroundColor">#FF888888</Color>
     <Color x:Key="DisabledBorderDarkColor">#FF888888</Color>
@@ -188,7 +189,7 @@
                                         <SolidColorBrush Color="{DynamicResource BorderColor}"/>
                                     </Border.BorderBrush>
                                     <Border.Background>
-                                        <SolidColorBrush Color="{DynamicResource ControlColor}"/>
+                                        <SolidColorBrush Color="{DynamicResource DropDownColor}"/>
                                     </Border.Background>
                                 </Border>
                                 <ScrollViewer Margin="4,6,4,6"
