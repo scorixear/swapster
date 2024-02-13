@@ -97,7 +97,7 @@ namespace Swapster.ViewModels
                         }
                         processSwitcher.TimerTickEvent += Timer_Elapsed;
                         processSwitcher.ProcessSwitchErrorEvent += ProcessSwitcher_ProcessSwitchErrorEvent;
-                        bool success = processSwitcher.Start(processes, intTimerInterval);
+                        bool success = processSwitcher.Start(processes, intTimerInterval, _selectedSwitchType);
                         if (success == false)
                         {
                             return;
@@ -187,6 +187,30 @@ namespace Swapster.ViewModels
         // Currently Process selected from the selected processes
         public ProcessData? SelectedActiveProcess { get; set; }
 
+        private ProcessSwitcher.ProcessSwitchType _selectedSwitchType = ProcessSwitcher.ProcessSwitchType.AppActivate;
+        public string SelectedSwitchMethod
+        {
+            get
+            {
+                return _selectedSwitchType switch
+                {
+                    ProcessSwitcher.ProcessSwitchType.SetForegroundWindow => "SetForeground",
+                    ProcessSwitcher.ProcessSwitchType.SwitchToThisWindow => "SwitchTo",
+                    _ => "AppActivate",
+                };
+            }
+
+            set
+            {
+                _selectedSwitchType = value switch
+                {
+                    "SetForeground" => ProcessSwitcher.ProcessSwitchType.SetForegroundWindow,
+                    "SwitchTo" => ProcessSwitcher.ProcessSwitchType.SwitchToThisWindow,
+                    _ => ProcessSwitcher.ProcessSwitchType.AppActivate,
+                };
+                NotifyOfPopertyChanged(nameof(SelectedSwitchMethod));
+            }
+        }
 
         public MainViewModel()
         {

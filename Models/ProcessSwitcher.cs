@@ -9,13 +9,13 @@ namespace Swapster.Models
     {
         // Alternative Options to set Focus
         // all not that reliable
-        //[LibraryImport("user32.dll")]
-        //[return: MarshalAs(UnmanagedType.Bool)]
-        //private static partial bool SetForegroundWindow(IntPtr hWnd);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetForegroundWindow(IntPtr hWnd);
 
-        //[LibraryImport("user32.dll")]
-        //[return: MarshalAs(UnmanagedType.Bool)]
-        //private static partial bool SwitchToThisWindow(IntPtr hWnd, [MarshalAs(UnmanagedType.Bool)] bool bEnable);
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SwitchToThisWindow(IntPtr hWnd, [MarshalAs(UnmanagedType.Bool)] bool bEnable);
 
         //[DllImport("user32.dll")]
         //private static extern IntPtr SetFocus(HandleRef hWnd);
@@ -58,6 +58,13 @@ namespace Swapster.Models
             ForceMinimized = 11
         }
 
+        public enum ProcessSwitchType
+        {
+            AppActivate,
+            SetForegroundWindow,
+            SwitchToThisWindow
+        }
+
         // the current ThreadID
         private readonly uint _threadId;
         public ProcessSwitcher()
@@ -70,21 +77,34 @@ namespace Swapster.Models
         /// </summary>
         /// <param name="process"></param>
         /// <returns></returns>
-        private static int BringWindowToFront(Process process)
+        private static int BringWindowToFront(Process process, ProcessSwitchType processSwitchType)
         {
             // always maximize works best
             ShowWindow(process.MainWindowHandle, ShowWindowEnum.ShowMaximized);
             // AppActive seems most consistent between SwitchToThisWindow, SetForegroundWindow, SetActiveWindow and AppActivate
             // My guess is, the WindowHandle changes over time, while AppActive retrieves the WindowHandle everytime new from the given process id
-            try
+            bool success;
+            switch (processSwitchType)
             {
-                Interaction.AppActivate(process.Id);
+
+                case ProcessSwitchType.SetForegroundWindow:
+                    success = SetForegroundWindow(process.MainWindowHandle);
+                    return success ? 0 : 1;
+                case ProcessSwitchType.SwitchToThisWindow:
+                    success = SwitchToThisWindow(process.MainWindowHandle, true);
+                    return success ? 0 : 2;
+                case ProcessSwitchType.AppActivate:
+                default:
+                    try
+                    {
+                        Interaction.AppActivate(process.Id);
+                    }
+                    catch
+                    {
+                        return 3;
+                    }
+                    return 0;
             }
-            catch
-            {
-                return 3;
-            }
-            return 0;
         }
 
         // The id of the next process to bring to the front
@@ -110,7 +130,7 @@ namespace Swapster.Models
         /// <param name="processes"></param>
         /// <param name="timerLength"></param>
         /// <returns></returns>
-        public bool Start(List<Process> processes, int timerLength)
+        public bool Start(List<Process> processes, int timerLength, ProcessSwitchType processSwitchType)
         {
             // if no process is provided or the timer is 0
             // don't start
@@ -159,7 +179,7 @@ namespace Swapster.Models
                         // try bringing the process to the front
                         try
                         {
-                            int result = BringWindowToFront(processList[currentProcessCounter]);
+                            int result = BringWindowToFront(processList[currentProcessCounter], processSwitchType);
                             // if the result is not 0, this is an error
                             // the error ID will be shown in the error popup
                             // and invoke the error event
@@ -180,7 +200,7 @@ namespace Swapster.Models
             // if that fails, don't start the timer
             try
             {
-                int result = BringWindowToFront(processList[currentProcessCounter]);
+                int result = BringWindowToFront(processList[currentProcessCounter], processSwitchType);
                 if (result != 0)
                 {
                     ProcessSwitchErrorEvent?.Invoke(processList[currentProcessCounter].ProcessName + ": " + result);
