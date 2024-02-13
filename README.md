@@ -46,6 +46,12 @@ While testing this application, the "AppActivate" method (selected by default) w
 
 ![Red box around the methode selection](Pictures/MainView_Method.png)
 
+The checkbox below the label "Ton abspielen" will activate sound notifications 3 seconds before the
+switch happens. If checked a short "beep" sound will be played at 3, 2 and 1 second before the switch.
+When the switch happens, a longer "success" sound will be played.
+
+![Red box around the sound checkbox](Pictures/MainView_Sound.png)
+
 The Refresh button will refresh both lists of process and will add new processes found to the left list.
 Old processes that do not exist anymore will be removed from both lists.
 This also stops the current timer if it is running.

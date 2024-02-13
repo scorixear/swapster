@@ -2,6 +2,9 @@
 using Swapster.Utils;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Media;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 
 namespace Swapster.ViewModels
@@ -212,6 +215,10 @@ namespace Swapster.ViewModels
             }
         }
 
+        public bool SoundChecked { get; set; }
+
+        private readonly SoundPlayer? doneSound;
+        private readonly SoundPlayer? preSound;
         public MainViewModel()
         {
             processCollector = new ProcessCollector();
@@ -226,10 +233,33 @@ namespace Swapster.ViewModels
             IsRunning = false;
         }
 
-        // Called every second when the timer is elapsed
+        /// <summary>
+        /// Called every second when the timer elapsed
+        /// </summary>
+        /// <param name="timerLeft"></param>
         private void Timer_Elapsed(int timerLeft)
         {
             TimerCountdown = $"Switch in {timerLeft} Sekunden";
+            if (SoundChecked && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (timerLeft < 4 && timerLeft > 0)
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    string prePath = assembly.GetManifestResourceNames().Single(str => str.EndsWith("pre.wav"));
+                    Stream? stream = assembly.GetManifestResourceStream(prePath);
+                    SoundPlayer player = new(stream);
+                    player.Play();
+
+                }
+                else if (timerLeft == 0)
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    string prePath = assembly.GetManifestResourceNames().Single(str => str.EndsWith("done.wav"));
+                    Stream? stream = assembly.GetManifestResourceStream(prePath);
+                    SoundPlayer player = new(stream);
+                    player.Play();
+                }
+            }
         }
 
 
