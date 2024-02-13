@@ -11,6 +11,9 @@ The original project from Calax can be found [here](https://github.com/CalaxDev/
 
 ## Recommendation
 It is recommended to put all applications in `Window` or `Borderless Fullscreen`!
+Additionally, do not press any keys or move the mouse shortly before the switch happens.
+Windows prevents application focus changes if it detects user inputs shortly before.
+To improve usability, activate the sound notifications to get notified three seconds before the switch happens.
 
 ## Showcase
 This is the full application with all features included.
