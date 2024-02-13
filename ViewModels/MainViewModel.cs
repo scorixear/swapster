@@ -133,19 +133,6 @@ namespace Swapster.ViewModels
             }
         }
 
-        private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
-        {
-            ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
-            ShowError = true;
-            IsRunning = false;
-        }
-
-        // Called every second when the timer is elapsed
-        private void Timer_Elapsed(int timerLeft)
-        {
-            TimerCountdown = $"Switch in {timerLeft} Sekunden";
-        }
-
         // Binding for the Timer Length
         public string TimerLength { get; set; } = "60";
         // Label for Timer Countdown
@@ -207,6 +194,20 @@ namespace Swapster.ViewModels
             processSwitcher = new ProcessSwitcher();
             OkClickCommand = new DelegateCommand(OnErrorOkClick);
         }
+
+        private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
+        {
+            ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
+            ShowError = true;
+            IsRunning = false;
+        }
+
+        // Called every second when the timer is elapsed
+        private void Timer_Elapsed(int timerLeft)
+        {
+            TimerCountdown = $"Switch in {timerLeft} Sekunden";
+        }
+
 
         // Called when the Window is first loaded up
         public void OnWindowLoaded()
