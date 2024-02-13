@@ -52,7 +52,7 @@ When the switch happens, a longer "success" sound will be played.
 
 ![Red box around the sound checkbox](Pictures/MainView_Sound.png)
 
-The Refresh button will refresh both lists of process and will add new processes found to the left list.
+The Refresh button will refresh both lists of processes and will add new processes found to the left list.
 Old processes that do not exist anymore will be removed from both lists.
 This also stops the current timer if it is running.
 
@@ -71,6 +71,6 @@ After this, the button will then display "Stop". Clicking it againg will stop th
 While the timer is running, several errors can occure. Most commonly because a process could not be
 found anymore or Swapster couldn't bring it to the front.
 If an error occurs, an error message will be displayed giving you a solution hint on how to resolve the issue.
-The currently running timer will also be displayed. After clicking "OK" the application is ready to be started again.
+The currently running timer will also be disabled. After clicking "OK" the application is ready to be started again.
 
 ![Main View showing an error message](Pictures/MainView_Error.png)
