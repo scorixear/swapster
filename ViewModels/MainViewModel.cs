@@ -228,6 +228,11 @@ namespace Swapster.ViewModels
 
         private void ProcessSwitcher_ProcessSwitchErrorEvent(string processName)
         {
+            //// maybe no error, but remove Process from list
+            //SelectedProcesses = new ObservableCollection<ProcessData>(Processes.Where(p => p.Name != processName));
+            //// and restart timer
+            //IsRunning = false;
+            //IsRunning = true;
             ErrorMessage = $"Konnte nicht zum Prozess {processName} wechseln. Bitte einmal auf \"Refresh\" klicken!";
             ShowError = true;
             IsRunning = false;
@@ -291,19 +296,18 @@ namespace Swapster.ViewModels
 
             List<ProcessData> newProcessList = new();
             List<ProcessData> selectedProcessList = new();
+            foreach (ProcessData processData in SelectedProcesses)
+            {
+                if (processNames.Contains(processData.Name))
+                {
+                    selectedProcessList.Add(processData);
+                    processNames.Remove(processData.Name);
+                }
+            }
             // for each process name
             foreach (string processName in processNames)
             {
-                // if the process is selected, keep it selected
-                if (SelectedProcesses.FirstOrDefault(p => p.Name == processName) == null)
-                {
-                    newProcessList.Add(new ProcessData(processName));
-                }
-                // otherwise add it to the not-selected list
-                else
-                {
-                    selectedProcessList.Add(new ProcessData(processName));
-                }
+                newProcessList.Add(new ProcessData(processName));
             }
 
             // and update binding variables
@@ -337,7 +341,7 @@ namespace Swapster.ViewModels
                 selectedProcess
             };
             // and sort it
-            newSelectedProcesses.Sort((a, b) => a.Name.CompareTo(b.Name));
+            // newSelectedProcesses.Sort((a, b) => a.Name.CompareTo(b.Name));
             // Update binding variable
             SelectedProcesses = new ObservableCollection<ProcessData>(newSelectedProcesses);
         }
